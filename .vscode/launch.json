@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "运行 Streamlit (test.py)",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "streamlit",
+            "args": [
+                "run",
+                "test.py",
+                "--server.port=8501",
+                "--server.address=localhost"
+            ],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "python": "${workspaceFolder}/.venv/Scripts/python.exe",
+            "justMyCode": false
+        },
+        {
+            "name": "Chrome 打开 Streamlit（需先运行上一项）",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:8501",
+            "webRoot": "${workspaceFolder}"
+        }
+    ]
+}

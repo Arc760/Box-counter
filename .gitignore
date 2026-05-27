@@ -1,0 +1,5 @@
+git init                  # 如果还没初始化
+git add .
+git commit -m "多用户版上线"
+git remote add origin https://github.com/你的用户名/你的仓库名.git
+git push -u origin main
