@@ -17,8 +17,11 @@ from streamlit_js_eval import streamlit_js_eval
 from db import (
     COLUMNS,
     delete_row,
+    get_nickname,
     load_all_df,
+    load_all_nicknames,
     load_df,
+    save_nickname,
     save_row,
 )
 
@@ -532,6 +535,23 @@ if not user_uuid:
     st.info("正在初始化，请稍候…")
     st.stop()
 
+# 1.5 昵称：首次进入时弹出输入框
+nickname = get_nickname(user_uuid)
+if not nickname:
+    st.title("欢迎使用惊喜盒子蛋组检验")
+    st.markdown("请先设置一个昵称，方便管理员统计时区分用户。")
+    new_nick = st.text_input("你的昵称", placeholder="例如：玩家小明", max_chars=20)
+    if st.button("确认并开始", type="primary"):
+        if new_nick.strip():
+            ok = save_nickname(user_uuid, new_nick.strip())
+            if ok:
+                st.rerun()
+            else:
+                st.error("这个昵称已被其他人使用，请换一个。")
+        else:
+            st.error("昵称不能为空。")
+    st.stop()
+
 # 2. 加载该用户的数据
 df = load_df(user_uuid)
 eggs = EGG_GROUPS
@@ -561,7 +581,19 @@ with st.sidebar:
             st.rerun()
     st.caption("`pet_images.json` 配置图片与系别；`pets.txt` 配置蛋组。")
     st.divider()
-    st.caption(f"你的设备 ID（最后 8 位）：`...{user_uuid[-8:]}`")
+    st.markdown(f"**当前昵称：** {nickname}")
+    with st.expander("修改昵称"):
+        new_nick = st.text_input("新昵称", max_chars=20, key="change_nick")
+        if st.button("保存昵称"):
+            if new_nick.strip():
+                ok = save_nickname(user_uuid, new_nick.strip())
+                if ok:
+                    st.success("昵称已更新。")
+                    st.rerun()
+                else:
+                    st.error("这个昵称已被其他人使用，请换一个。")
+            else:
+                st.error("昵称不能为空。")
 
 # 4. 旧数据警告
 legacy_cols = [c for c in df.columns if c.endswith("_egg")]
@@ -722,16 +754,17 @@ with tab_admin:
 
         if len(all_df) > 0:
             st.subheader("各用户数据量")
+            nicknames = load_all_nicknames()
             user_counts = (
                 all_df.groupby("user_uuid")
                 .agg(轮数=("round_id", "count"))
                 .reset_index()
             )
-            user_counts["user_uuid_short"] = user_counts["user_uuid"].str[-8:]
+            user_counts["昵称"] = user_counts["user_uuid"].map(
+                lambda x: nicknames.get(x, "（未设置）")
+            )
             st.dataframe(
-                user_counts[["user_uuid_short", "轮数"]].rename(
-                    columns={"user_uuid_short": "用户ID（后8位）"}
-                ),
+                user_counts[["昵称", "轮数"]],
                 use_container_width=True,
                 hide_index=True,
             )
